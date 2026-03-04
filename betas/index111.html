@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Palencia Descubre — Ciudad Viva</title>
+<link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet"/>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Raleway:wght@300;400;600&display=swap');
+:root {
+  --stone:#C4A882; --stone-dim:rgba(196,168,130,0.15); --stone-border:rgba(196,168,130,0.25);
+  --dark:#080B10; --text:#EAE6DC; --text-dim:rgba(234,230,220,0.45);
+  --green:#6DBF82; --mystery:#C8407A;
+  --nature:#5BA87A; --culture:#5B8AC8; --civic:#C87A3A;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--dark);color:var(--text);font-family:'Raleway',sans-serif;overflow:hidden;height:100vh;width:100vw;}
+#map{position:fixed;inset:0;width:100%;height:100%;z-index:1;}
+
+.panel{background:rgba(8,11,16,0.92);border:1px solid var(--stone-border);border-radius:3px;overflow:hidden;backdrop-filter:blur(12px);}
+.ph{padding:9px 13px;border-bottom:1px solid var(--stone-border);font-size:8px;letter-spacing:0.28em;text-transform:uppercase;color:var(--stone);display:flex;align-items:center;justify-content:space-between;}
+.pb{padding:11px 13px;}
+
+#header{position:fixed;top:0;left:0;right:0;z-index:1000;padding:14px 24px;display:flex;align-items:center;justify-content:space-between;background:linear-gradient(to bottom,rgba(8,11,16,0.97) 70%,transparent);}
+.brand-name{font-family:'Cinzel',serif;font-size:20px;font-weight:600;letter-spacing:0.12em;}
+.brand-name em{color:var(--stone);font-style:normal;}
+.brand-sub{font-size:8px;letter-spacing:0.35em;color:var(--text-dim);text-transform:uppercase;margin-top:2px;}
+.header-right{display:flex;align-items:center;gap:16px;}
+.hxp{display:flex;flex-direction:column;align-items:flex-end;gap:3px;}
+.hxp-label{font-size:8px;letter-spacing:0.2em;color:var(--text-dim);text-transform:uppercase;}
+.hxp-row{display:flex;align-items:center;gap:8px;}
+.hxp-level{font-family:'Cinzel',serif;font-size:13px;color:var(--stone);}
+.hxp-bar-wrap{width:90px;height:3px;background:rgba(255,255,255,0.08);border-radius:2px;overflow:hidden;}
+.hxp-bar-fill{height:100%;background:linear-gradient(90deg,var(--stone),#E8D5A0);border-radius:2px;transition:width 0.8s ease;}
+.hxp-pts{font-size:9px;color:var(--stone);}
+.live-dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:blink 2s infinite;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
+
+#sl{position:fixed;left:0;top:0;bottom:0;width:270px;z-index:900;padding:72px 0 70px;display:flex;flex-direction:column;background:linear-gradient(to right,rgba(8,11,16,0.95) 80%,transparent);pointer-events:none;overflow-y:auto;scrollbar-width:none;}
+#sl>*{pointer-events:all;margin:0 14px 12px;}
+.profile-xp{padding:14px;}
+.profile-avatar{width:48px;height:48px;border-radius:50%;background:var(--stone-dim);border:2px solid var(--stone-border);display:flex;align-items:center;justify-content:center;font-family:'Cinzel',serif;font-size:20px;color:var(--stone);margin-bottom:10px;}
+.profile-name{font-size:13px;font-weight:600;color:var(--text);margin-bottom:2px;}
+.profile-rank{font-size:9px;letter-spacing:0.15em;color:var(--stone);text-transform:uppercase;margin-bottom:10px;}
+.xp-bar-big-wrap{height:5px;background:rgba(255,255,255,0.07);border-radius:3px;overflow:hidden;margin-bottom:4px;}
+.xp-bar-big{height:100%;background:linear-gradient(90deg,var(--stone),#E8D5A0);border-radius:3px;transition:width 1s ease;}
+.xp-nums{display:flex;justify-content:space-between;font-size:9px;color:var(--text-dim);}
+.xp-nums span:first-child{color:var(--stone);}
+.stats-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:10px;}
+.stat-box{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:3px;padding:7px;text-align:center;}
+.stat-box .sv{font-family:'Cinzel',serif;font-size:16px;color:var(--stone);}
+.stat-box .sl{font-size:7px;letter-spacing:0.15em;color:var(--text-dim);text-transform:uppercase;margin-top:2px;}
+.mission-item{padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.05);cursor:pointer;transition:padding-left 0.2s;}
+.mission-item:last-child{border-bottom:none;}
+.mission-item:hover{padding-left:5px;}
+.mi-top{display:flex;align-items:center;gap:7px;margin-bottom:4px;}
+.mi-icon{font-size:13px;flex-shrink:0;}
+.mi-name{font-size:11px;color:var(--text);flex:1;}
+.mi-xp{font-size:9px;color:var(--stone);white-space:nowrap;font-weight:600;}
+.mi-type{display:inline-block;font-size:7px;letter-spacing:0.15em;text-transform:uppercase;padding:1px 5px;border-radius:2px;margin-bottom:4px;}
+.mi-type.patrimonio{background:rgba(196,168,130,0.15);color:var(--stone);}
+.mi-type.naturaleza{background:rgba(91,168,122,0.15);color:var(--nature);}
+.mi-type.cultura{background:rgba(91,138,200,0.15);color:var(--culture);}
+.mi-type.civico{background:rgba(200,122,58,0.15);color:var(--civic);}
+.mi-type.misterio{background:rgba(200,64,122,0.2);color:var(--mystery);animation:mp 2s infinite;}
+@keyframes mp{0%,100%{opacity:1}50%{opacity:0.6}}
+.mi-bar-wrap{height:2px;background:rgba(255,255,255,0.06);border-radius:1px;overflow:hidden;}
+.mi-bar{height:100%;border-radius:1px;transition:width 0.8s ease;}
+
+#sr{position:fixed;right:0;top:0;bottom:0;width:255px;z-index:900;padding:72px 0 70px;display:flex;flex-direction:column;background:linear-gradient(to left,rgba(8,11,16,0.95) 80%,transparent);pointer-events:none;}
+#sr>*{pointer-events:all;margin:0 14px 12px;}
+.rank-row{display:flex;align-items:center;gap:9px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.04);}
+.rank-row:last-child{border-bottom:none;}
+.rank-num{font-family:'Cinzel',serif;font-size:11px;width:18px;text-align:center;flex-shrink:0;}
+.rank-num.gold{color:#F0C040;}.rank-num.silver{color:#B0B8C8;}.rank-num.bronze{color:#C08850;}.rank-num.other{color:var(--text-dim);}
+.rank-avatar{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;border:1px solid rgba(255,255,255,0.12);}
+.rank-info{flex:1;min-width:0;}
+.rank-name{font-size:10px;color:var(--text);}
+.rank-level{font-size:8px;color:var(--text-dim);}
+.rank-xp{font-size:9px;color:var(--stone);white-space:nowrap;font-weight:600;}
+#chat-panel{flex:1;display:flex;flex-direction:column;min-height:0;}
+#chat-msgs{flex:1;overflow-y:auto;padding:9px 12px;display:flex;flex-direction:column;gap:7px;scrollbar-width:thin;scrollbar-color:var(--stone-dim) transparent;}
+.cm{font-size:10px;line-height:1.45;}
+.cm .cw{font-weight:600;margin-right:4px;}
+.cm .ct{color:var(--text-dim);}
+.cm.sys .ct{font-style:italic;}
+.cm.mys .ct{color:var(--mystery);}
+#chat-inp-area{border-top:1px solid var(--stone-border);display:flex;}
+#chat-inp{flex:1;background:transparent;border:none;outline:none;padding:9px 11px;font-family:'Raleway',sans-serif;font-size:10px;color:var(--text);}
+#chat-inp::placeholder{color:var(--text-dim);}
+#chat-send{padding:0 11px;background:transparent;border:none;border-left:1px solid var(--stone-border);color:var(--stone);cursor:pointer;font-size:14px;}
+#chat-send:hover{background:var(--stone-dim);}
+
+#bottom-bar{position:fixed;bottom:0;left:0;right:0;z-index:1000;padding:10px 20px;display:flex;align-items:center;justify-content:center;gap:10px;background:linear-gradient(to top,rgba(8,11,16,0.97) 60%,transparent);}
+.btn{padding:9px 18px;font-family:'Raleway',sans-serif;font-weight:600;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;border-radius:3px;cursor:pointer;transition:all 0.2s;border:1px solid;}
+.btn-primary{background:var(--stone);color:var(--dark);border-color:var(--stone);}
+.btn-ghost{background:transparent;color:var(--stone);border-color:var(--stone-border);}
+.btn-ghost:hover,.btn-ghost.active{background:var(--stone-dim);border-color:var(--stone);}
+.btn-mystery{background:rgba(200,64,122,0.15);color:var(--mystery);border-color:rgba(200,64,122,0.4);animation:mglow 3s ease-in-out infinite;}
+@keyframes mglow{0%,100%{box-shadow:0 0 0 rgba(200,64,122,0)}50%{box-shadow:0 0 12px rgba(200,64,122,0.4)}}
+
+/* Markers */
+.lm-marker{display:flex;flex-direction:column;align-items:center;cursor:pointer;transition:transform 0.2s;}
+.lm-marker:hover{transform:scale(1.1);}
+.lm-pin{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;border:2px solid;animation:pin-float 3s ease-in-out infinite;}
+@keyframes pin-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+.lm-label{border-radius:3px;padding:3px 8px;font-family:'Cinzel',serif;font-size:10px;white-space:nowrap;margin-top:4px;backdrop-filter:blur(8px);border:1px solid;}
+.lm-marker.misterio .lm-pin{animation:pin-float 3s ease-in-out infinite,myst-glow 2s ease-in-out infinite;}
+@keyframes myst-glow{0%,100%{box-shadow:0 0 15px #C8407A}50%{box-shadow:0 0 40px #C8407A}}
+.avatar-dot{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;border:2px solid rgba(255,255,255,0.3);}
+
+/* Popup */
+.maplibregl-popup-content{background:rgba(8,11,16,0.97)!important;border:1px solid var(--stone-border)!important;border-radius:4px!important;color:var(--text)!important;font-family:'Raleway',sans-serif!important;padding:14px 16px!important;box-shadow:0 8px 40px rgba(0,0,0,0.8)!important;min-width:220px;}
+.maplibregl-popup-tip{border-top-color:rgba(8,11,16,0.97)!important;border-bottom-color:rgba(8,11,16,0.97)!important;}
+.maplibregl-popup-close-button{color:var(--stone)!important;font-size:18px!important;right:8px!important;top:6px!important;}
+.p-title{font-family:'Cinzel',serif;font-size:15px;color:var(--stone);margin-bottom:4px;}
+.p-type{font-size:8px;letter-spacing:0.2em;text-transform:uppercase;margin-bottom:7px;}
+.p-desc{font-size:10px;color:var(--text-dim);line-height:1.6;margin-bottom:8px;}
+.p-xp{font-size:11px;font-weight:600;margin-bottom:10px;}
+.p-btn{display:inline-block;padding:7px 14px;border-radius:3px;font-size:9px;letter-spacing:0.15em;text-transform:uppercase;font-family:'Raleway',sans-serif;font-weight:600;cursor:pointer;border:1px solid var(--stone-border);background:var(--stone-dim);color:var(--stone);}
+.p-btn:hover{background:rgba(196,168,130,0.25);}
+
+/* Mystery */
+#mystery-overlay{position:fixed;inset:0;z-index:2000;background:rgba(8,4,12,0.93);display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity 0.5s;}
+#mystery-overlay.show{opacity:1;pointer-events:all;}
+.mystery-box{max-width:400px;width:90%;border:1px solid rgba(200,64,122,0.5);border-radius:6px;background:rgba(20,10,28,0.98);padding:32px;text-align:center;box-shadow:0 0 60px rgba(200,64,122,0.2);}
+.mystery-icon{font-size:48px;margin-bottom:16px;animation:float 3s ease-in-out infinite;}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.mystery-title{font-family:'Cinzel',serif;font-size:22px;color:var(--mystery);letter-spacing:0.08em;margin-bottom:12px;}
+.mystery-desc{font-size:12px;color:var(--text-dim);line-height:1.7;margin-bottom:20px;}
+.mystery-reward{font-size:11px;color:var(--stone);margin-bottom:24px;font-weight:600;}
+.mystery-btns{display:flex;gap:10px;justify-content:center;}
+
+#levelup-toast{position:fixed;top:80px;left:50%;transform:translateX(-50%) translateY(-20px);z-index:3000;background:rgba(12,16,24,0.97);border:1px solid var(--stone);border-radius:4px;padding:14px 28px;text-align:center;opacity:0;pointer-events:none;transition:all 0.4s;}
+#levelup-toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+.lu-title{font-family:'Cinzel',serif;font-size:16px;color:var(--stone);}
+.lu-sub{font-size:10px;color:var(--text-dim);margin-top:3px;}
+
+#loading{position:fixed;inset:0;z-index:9999;background:var(--dark);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;transition:opacity 0.9s;}
+#loading.out{opacity:0;pointer-events:none;}
+.l-title{font-family:'Cinzel',serif;font-size:42px;font-weight:400;letter-spacing:0.15em;}
+.l-title em{color:var(--stone);font-style:normal;}
+.l-sub{font-size:9px;letter-spacing:0.35em;color:var(--text-dim);text-transform:uppercase;}
+.l-bar-wrap{width:280px;height:2px;background:rgba(255,255,255,0.07);border-radius:1px;overflow:hidden;}
+.l-bar{height:100%;background:var(--stone);width:0;transition:width 0.35s ease;}
+.l-status{font-size:9px;letter-spacing:0.18em;color:var(--text-dim);}
+::-webkit-scrollbar{width:3px;}
+::-webkit-scrollbar-thumb{background:var(--stone-dim);border-radius:2px;}
+.maplibregl-ctrl-attrib{font-size:8px!important;opacity:0.4!important;}
+.maplibregl-ctrl-group{background:rgba(8,11,16,0.9)!important;border:1px solid var(--stone-border)!important;}
+.maplibregl-ctrl-group button{background:transparent!important;color:var(--stone)!important;}
+@media(max-width:768px){#sl,#sr{display:none;}}
+</style>
+</head>
+<body>
+
+<div id="loading">
+  <div class="l-title">Palencia <em>Descubre</em></div>
+  <div class="l-sub">Ciudad Viva · Ayuntamiento de Palencia</div>
+  <div class="l-bar-wrap"><div class="l-bar" id="lbar"></div></div>
+  <div class="l-status" id="lstatus">Cargando ciudad en 3D...</div>
+</div>
+
+<div id="mystery-overlay">
+  <div class="mystery-box">
+    <div class="mystery-icon" id="myst-icon">🌑</div>
+    <div class="mystery-title" id="myst-title">Evento Misterioso</div>
+    <div class="mystery-desc" id="myst-desc">Algo extraño ocurre en la ciudad...</div>
+    <div class="mystery-reward" id="myst-reward">+300 XP si completas el reto</div>
+    <div class="mystery-btns">
+      <button class="btn btn-mystery" onclick="acceptMystery()">Investigar</button>
+      <button class="btn btn-ghost" onclick="closeMystery()">Ignorar</button>
+    </div>
+  </div>
+</div>
+
+<div id="levelup-toast">
+  <div class="lu-title" id="lu-title">¡Nuevo Nivel!</div>
+  <div class="lu-sub" id="lu-sub">Has alcanzado un nuevo rango</div>
+</div>
+
+<div id="map"></div>
+
+<div id="header">
+  <div>
+    <div class="brand-name">Palencia <em>Descubre</em></div>
+    <div class="brand-sub">Ciudad Viva · Ayuntamiento de Palencia</div>
+  </div>
+  <div class="header-right">
+    <div class="hxp">
+      <div class="hxp-label">Tu progreso</div>
+      <div class="hxp-row">
+        <div class="hxp-level" id="h-level">Nv.1</div>
+        <div class="hxp-bar-wrap"><div class="hxp-bar-fill" id="h-xpbar" style="width:12%"></div></div>
+        <div class="hxp-pts" id="h-xppts">120 XP</div>
+      </div>
+    </div>
+    <div class="live-dot"></div>
+  </div>
+</div>
+
+<div id="sl">
+  <div class="panel">
+    <div class="ph"><span>Mi Perfil</span><span>⚜</span></div>
+    <div class="pb profile-xp">
+      <div class="profile-avatar" id="p-avatar">V</div>
+      <div class="profile-name" id="p-name">Viajero</div>
+      <div class="profile-rank" id="p-rank">🚶 Viajero del Carrión</div>
+      <div class="xp-bar-big-wrap"><div class="xp-bar-big" id="p-xpbar" style="width:12%"></div></div>
+      <div class="xp-nums"><span id="p-xp">120 XP</span><span id="p-xpnext">/ 500 XP</span></div>
+      <div class="stats-row">
+        <div class="stat-box"><div class="sv" id="st-lugares">0</div><div class="sl">Lugares</div></div>
+        <div class="stat-box"><div class="sv" id="st-misiones">0</div><div class="sl">Misiones</div></div>
+        <div class="stat-box"><div class="sv" id="st-dias">1</div><div class="sl">Días</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="ph"><span>Misiones</span><span>6 activas</span></div>
+    <div class="pb" id="missions-list"></div>
+  </div>
+</div>
+
+<div id="sr">
+  <div class="panel">
+    <div class="ph"><span>Exploradores</span><span style="font-size:8px;color:var(--text-dim);cursor:pointer" onclick="toggleRanking()">opt-in ⓘ</span></div>
+    <div class="pb" id="ranking-list"></div>
+  </div>
+  <div id="chat-panel" class="panel">
+    <div class="ph"><span>Ciudad Viva</span><span>💬</span></div>
+    <div id="chat-msgs"></div>
+    <div id="chat-inp-area">
+      <input id="chat-inp" type="text" placeholder="Mensaje a la ciudad..." maxlength="80">
+      <button id="chat-send">→</button>
+    </div>
+  </div>
+</div>
+
+<div id="bottom-bar">
+  <button class="btn btn-ghost active" id="btn3d" onclick="toggle3D()">🏙 3D</button>
+  <button class="btn btn-ghost" id="btn2d" onclick="toggle2D()">🗺 2D</button>
+  <button class="btn btn-primary" onclick="setAR()">📷 AR</button>
+  <button class="btn btn-ghost" onclick="flashLandmarks()">⚔ Misiones</button>
+  <button class="btn btn-mystery" onclick="showMysteryEvent()">🌑 Misterio</button>
+</div>
+
+<script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+// ══════════════════════════════════════════════
+// SUPABASE
+// ══════════════════════════════════════════════
+const SUPA_URL='https://dsjpsczwznxzitxllamo.supabase.co';
+const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRzanBzY3p3em54eml0eGxsYW1vIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI2MzMxMTEsImV4cCI6MjA4ODIwOTExMX0.Un03K5rMptFd74Qay0oplDqGLHBLt0P8ZFu70Fg63PQ';
+const supa=supabase.createClient(SUPA_URL,SUPA_KEY);
+let MY_USERNAME='Viajero_'+Math.floor(Math.random()*9000+1000);
+let MY_USER_ID=null;
+
+// ══════════════════════════════════════════════
+// DATA
+// ══════════════════════════════════════════════
+const LEVELS=[
+  {min:0,    max:500,   name:'Viajero del Carrión',  icon:'🚶'},
+  {min:500,  max:1500,  name:'Conocedor de Palencia', icon:'🏛'},
+  {min:1500, max:3500,  name:'Guardián del Románico', icon:'⛪'},
+  {min:3500, max:7000,  name:'Cronista Palentino',    icon:'📜'},
+  {min:7000, max:15000, name:'Leyenda de la Ciudad',  icon:'⚜'},
+  {min:15000,max:99999, name:'Inmortal de Palencia',  icon:'👑'},
+];
+const TYPE_HEX={patrimonio:'#C4A882',naturaleza:'#5BA87A',cultura:'#5B8AC8',civico:'#C87A3A',misterio:'#C8407A'};
+const TYPE_BG ={patrimonio:'rgba(196,168,130,0.2)',naturaleza:'rgba(91,168,122,0.2)',cultura:'rgba(91,138,200,0.2)',civico:'rgba(200,122,58,0.2)',misterio:'rgba(200,64,122,0.25)'};
+
+const LANDMARKS=[
+  {name:"Plaza Mayor",           lat:42.010778,lon:-4.532763,type:"patrimonio",xp:150,icon:"🏛",desc:"Centro histórico de Palencia, s.XVI. Escenario de mercados y fiestas desde hace siglos."},
+  {name:"Catedral de S. Antolín",lat:42.011419,lon:-4.537045,type:"patrimonio",xp:200,icon:"⛪",desc:"Joya del gótico español, iniciada en el s.XIV. Alberga la cripta del mártir San Antolín."},
+  {name:"Iglesia San Miguel",    lat:42.007866,lon:-4.534382,type:"patrimonio",xp:130,icon:"⛪",desc:"Románico palentino s.XII–XIII. Aquí contrajo matrimonio el Cid Campeador."},
+  {name:"Árbol del Paraíso",     lat:42.009840,lon:-4.535655,type:"naturaleza", xp:90, icon:"🌳",desc:"Mítico árbol centenario en el corazón de Palencia, símbolo vivo de la ciudad."},
+  {name:"Río Carrión",           lat:42.010100,lon:-4.538500,type:"naturaleza", xp:80, icon:"🌿",desc:"Paseo fluvial histórico que atraviesa la ciudad. Ruta del Camino de Santiago."},
+  {name:"Parque del Salón",      lat:42.005800,lon:-4.533800,type:"naturaleza", xp:60, icon:"🌿",desc:"Jardín romántico del s.XIX, uno de los más bellos de Castilla y León."},
+  {name:"Museo Arqueológico",    lat:42.010000,lon:-4.529500,type:"cultura",    xp:180,icon:"🎨",desc:"Patrimonio palentino desde la prehistoria hasta la Edad Media."},
+  {name:"Teatro Principal",      lat:42.008900,lon:-4.533000,type:"cultura",    xp:120,icon:"🎭",desc:"Histórica sala de espectáculos del s.XIX, corazón cultural de la ciudad."},
+  {name:"Cristo del Otero",      lat:41.998300,lon:-4.533800,type:"patrimonio", xp:160,icon:"✝", desc:"Monumento icónico de 21m visible desde toda la ciudad."},
+  {name:"???",                   lat:42.009000,lon:-4.536200,type:"misterio",   xp:400,icon:"🌑",desc:"Un lugar donde la historia y la leyenda se confunden..."},
+];
+
+const MISSIONS=[
+  {id:1,name:'Visita la Catedral', type:'patrimonio',icon:'⛪',xp:200,progress:0,total:1,place:'Catedral de S. Antolín'},
+  {id:2,name:'Ruta del Carrión',   type:'naturaleza', icon:'🌿',xp:150,progress:1,total:3,place:'Río Carrión'},
+  {id:3,name:'Trivia Plaza Mayor', type:'patrimonio',icon:'🏛',xp:250,progress:1,total:3,place:'Plaza Mayor'},
+  {id:4,name:'Visita el Museo',    type:'cultura',   icon:'🎨',xp:180,progress:0,total:1,place:'Museo Arqueológico'},
+  {id:5,name:'Reporta tu barrio',  type:'civico',    icon:'📋',xp:100,progress:0,total:1,place:'Tu barrio'},
+  {id:6,name:'La Sombra del Rey',  type:'misterio',  icon:'🌑',xp:400,progress:0,total:1,place:'???'},
+];
+
+const MYSTERY_EVENTS=[
+  {icon:'🌑',title:'La Sombra del Rey Wamba',  desc:'En las noches de luna nueva, el espíritu del rey visigodo vaga por las murallas. Localiza 3 puntos antes del amanecer.',reward:'+400 XP · Insignia "Testigo del Rey"'},
+  {icon:'🕯',title:'El Monje Sin Nombre',       desc:'Un manuscrito olvidado en la Catedral revela la ubicación de una cámara secreta. Resuelve el enigma antes de que suene la campana.',reward:'+350 XP · Insignia "Guardián del Secreto"'},
+  {icon:'🦅',title:'El Halcón de Doña Urraca', desc:'La reina dejó un mensaje cifrado entre las piedras. El primer explorador en descifrarlo será nombrado Cronista Oficial.',reward:'+500 XP · Título "Cronista de Doña Urraca"'},
+];
+
+let player={xp:120,level:0,lugares:0,misiones:0,dias:1};
+let map, is3D=true;
+const markerEls=[];
+
+// ══════════════════════════════════════════════
+// MAP INIT
+// ══════════════════════════════════════════════
+function initMap(){
+  map=new maplibregl.Map({
+    container:'map',
+    style:{
+      version:8,
+      glyphs:'https://demotiles.maplibre.org/font/{fontstack}/{range}.pbf',
+      sources:{
+        'osm':{type:'raster',tiles:['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],tileSize:256,attribution:'© OpenStreetMap'},
+        'osm-buildings':{
+          type:'vector',
+          url:'https://tiles.stadiamaps.com/data/openmaptiles.json',
+        }
+      },
+      layers:[
+        {id:'background',type:'background',paint:{'background-color':'#080B10'}},
+        {id:'osm-tiles',type:'raster',source:'osm',paint:{
+          'raster-brightness-min':0,
+          'raster-brightness-max':0.22,
+          'raster-saturation':-0.6,
+          'raster-contrast':0.2,
+          'raster-hue-rotate':210,
+        }},
+      ]
+    },
+    center:[-4.534500,42.010000],
+    zoom:15.5,
+    pitch:52,
+    bearing:-15,
+    antialias:true,
+  });
+
+  map.addControl(new maplibregl.NavigationControl({showCompass:true}),'bottom-right');
+
+  map.on('load',()=>{
+    // Edificios 3D desde OpenStreetMap via Overpass-derived tileset gratuito
+    map.addSource('buildings-3d',{
+      type:'vector',
+      url:'https://api.maptiler.com/tiles/v3/tiles.json?key=get_your_own_OpIi9ZULNHzrESv6T2vL',
+    });
+
+    // Fallback: edificios 3D generados a partir de OSM tiles estándar
+    // Usamos el layer de buildings del estilo de OpenMapTiles via Stadia
+    try {
+      map.addSource('stadia',{
+        type:'vector',
+        url:'https://tiles.stadiamaps.com/data/openmaptiles.json',
+      });
+
+      // Suelo / agua
+      map.addLayer({id:'water',type:'fill',source:'stadia','source-layer':'water',paint:{'fill-color':'#0D2A45','fill-opacity':0.9}});
+      map.addLayer({id:'waterway',type:'line',source:'stadia','source-layer':'waterway',paint:{'line-color':'#1A4A7A','line-width':3,'line-opacity':0.8}});
+      // Parques
+      map.addLayer({id:'park',type:'fill',source:'stadia','source-layer':'landuse',filter:['in','class','park','grass','forest'],paint:{'fill-color':'#0D2218','fill-opacity':0.8}});
+      // Carreteras
+      map.addLayer({id:'roads',type:'line',source:'stadia','source-layer':'transportation',paint:{'line-color':'#1A2535','line-width':['interpolate',['linear'],['zoom'],13,1,16,3]}});
+      map.addLayer({id:'roads-main',type:'line',source:'stadia','source-layer':'transportation',filter:['in','class','primary','secondary','trunk'],paint:{'line-color':'#243040','line-width':['interpolate',['linear'],['zoom'],13,2,16,6]}});
+      // Edificios 3D
+      map.addLayer({
+        id:'buildings',
+        type:'fill-extrusion',
+        source:'stadia',
+        'source-layer':'building',
+        paint:{
+          'fill-extrusion-color':['interpolate',['linear'],['get','render_height'],0,'#0D1018',20,'#111822',50,'#151F2A',100,'#1A2535'],
+          'fill-extrusion-height':['coalesce',['get','render_height'],['get','height'],5],
+          'fill-extrusion-base':['coalesce',['get','render_min_height'],0],
+          'fill-extrusion-opacity':0.85,
+        }
+      });
+    } catch(e) {
+      console.log('Stadia tiles not available, using basic view');
+    }
+
+    // Río Carrión destacado
+    map.addSource('river',{type:'geojson',data:{type:'Feature',geometry:{type:'LineString',coordinates:[
+      [-4.5508,42.0168],[-4.5490,42.0148],[-4.5472,42.0128],
+      [-4.5455,42.0108],[-4.5440,42.0090],[-4.5420,42.0068],
+      [-4.5398,42.0045],[-4.5375,42.0020],
+    ]}}});
+    map.addLayer({id:'river-glow',type:'line',source:'river',paint:{'line-color':'#4A90D9','line-width':8,'line-opacity':0.25,'line-blur':4}});
+    map.addLayer({id:'river-line',type:'line',source:'river',paint:{'line-color':'#1A5A8A','line-width':4,'line-opacity':0.7}});
+
+    // Añadir markers de landmarks
+    LANDMARKS.forEach(lm=>addLandmarkMarker(lm));
+
+    // Animación inicial — volar sobre Palencia
+    setTimeout(()=>{
+      map.flyTo({center:[-4.534500,42.010000],zoom:15.5,pitch:52,bearing:-15,duration:2000,essential:true});
+    },200);
+  });
+}
+
+function addLandmarkMarker(lm){
+  const color=TYPE_HEX[lm.type], bg=TYPE_BG[lm.type];
+  const el=document.createElement('div');
+  el.className=`lm-marker ${lm.type}`;
+  el.innerHTML=`
+    <div class="lm-pin" style="background:${bg};color:${color};border-color:${color}55;box-shadow:0 0 20px ${color}55">${lm.icon}</div>
+    <div class="lm-label" style="background:rgba(8,11,16,0.9);color:${color};border-color:${color}44">${lm.name}</div>`;
+
+  const popup=new maplibregl.Popup({offset:55,closeButton:true,maxWidth:'260px'})
+    .setHTML(`
+      <div class="p-title">${lm.icon} ${lm.name}</div>
+      <div class="p-type" style="color:${color}">${lm.type.toUpperCase()}</div>
+      <div class="p-desc">${lm.desc}</div>
+      <div class="p-xp" style="color:${color}">+${lm.xp} XP al visitar</div>
+      <button class="p-btn" onclick="startMission('${lm.name}',${lm.xp})">⚔ Iniciar misión</button>
+    `);
+
+  new maplibregl.Marker({element:el,anchor:'bottom'})
+    .setLngLat([lm.lon,lm.lat])
+    .setPopup(popup)
+    .addTo(map);
+
+  markerEls.push(el);
+}
+
+function addAvatarMarker(user){
+  const colors=['#C9A84C','#5B9BD5','#9B7EC8','#6DBF82','#C87A3A'];
+  const color=colors[Math.floor(Math.random()*colors.length)];
+  const el=document.createElement('div');
+  el.innerHTML=`<div class="avatar-dot" style="background:${color}33;color:${color};border-color:${color}66">${user.username[0].toUpperCase()}</div>`;
+  const lat=user.lat||42.0105+(Math.random()-0.5)*0.008;
+  const lon=user.lon||-4.5390+(Math.random()-0.5)*0.008;
+  new maplibregl.Marker({element:el}).setLngLat([lon,lat]).addTo(map);
+}
+
+// ══════════════════════════════════════════════
+// VIEW CONTROLS
+// ══════════════════════════════════════════════
+function toggle3D(){
+  is3D=true;
+  document.getElementById('btn3d').classList.add('active');
+  document.getElementById('btn2d').classList.remove('active');
+  map.easeTo({pitch:52,bearing:-15,duration:800});
+}
+function toggle2D(){
+  is3D=false;
+  document.getElementById('btn2d').classList.add('active');
+  document.getElementById('btn3d').classList.remove('active');
+  map.easeTo({pitch:0,bearing:0,duration:800});
+}
+function setAR(){
+  addChat('Sistema','📷 Vista AR — requiere GPS + cámara en móvil real',true);
+  alert('🚧 AR próximamente con AR.js + A-Frame anclado a GPS.\nRequiere dispositivo móvil real con HTTPS.');
+}
+function flashLandmarks(){
+  markerEls.forEach(el=>{el.style.filter='brightness(2)';setTimeout(()=>el.style.filter='',1500);});
+  addChat('Sistema','📍 Monumentos marcados en el mapa',true);
+}
+
+// ══════════════════════════════════════════════
+// PLAYER
+// ══════════════════════════════════════════════
+function getLevel(xp){for(let i=LEVELS.length-1;i>=0;i--)if(xp>=LEVELS[i].min)return i;return 0;}
+function getLevelPct(xp){const lv=getLevel(xp),l=LEVELS[lv];return((xp-l.min)/(l.max-l.min)*100).toFixed(0);}
+function updatePlayerUI(){
+  const lv=getLevel(player.xp),l=LEVELS[lv],pct=getLevelPct(player.xp);
+  document.getElementById('p-xpbar').style.width=pct+'%';
+  document.getElementById('p-xp').textContent=player.xp.toLocaleString()+' XP';
+  document.getElementById('p-xpnext').textContent='/ '+l.max.toLocaleString()+' XP';
+  document.getElementById('p-rank').textContent=l.icon+' '+l.name;
+  document.getElementById('st-lugares').textContent=player.lugares;
+  document.getElementById('st-misiones').textContent=player.misiones;
+  document.getElementById('st-dias').textContent=player.dias;
+  document.getElementById('h-level').textContent='Nv.'+(lv+1);
+  document.getElementById('h-xpbar').style.width=pct+'%';
+  document.getElementById('h-xppts').textContent=player.xp.toLocaleString()+' XP';
+}
+function gainXP(amount,reason){
+  const oldLv=getLevel(player.xp);
+  player.xp+=amount;
+  const newLv=getLevel(player.xp);
+  updatePlayerUI();
+  addChat('Sistema',`+${amount} XP — ${reason}`,true);
+  if(newLv>oldLv)showLevelUp(newLv);
+}
+
+// ══════════════════════════════════════════════
+// MISSIONS
+// ══════════════════════════════════════════════
+function buildMissions(){
+  document.getElementById('missions-list').innerHTML=MISSIONS.map(m=>`
+    <div class="mission-item" onclick="clickMission(${m.id})">
+      <div class="mi-top"><span class="mi-icon">${m.icon}</span><span class="mi-name">${m.name}</span><span class="mi-xp">+${m.xp} XP</span></div>
+      <span class="mi-type ${m.type}">${m.type}</span>
+      <div class="mi-bar-wrap"><div class="mi-bar" style="width:${(m.progress/m.total)*100}%;background:${TYPE_HEX[m.type]}"></div></div>
+    </div>`).join('');
+}
+function clickMission(id){
+  const m=MISSIONS.find(x=>x.id===id);
+  if(!m)return;
+  if(m.type==='misterio'){showMysteryEvent();return;}
+  const lm=LANDMARKS.find(l=>l.name.toLowerCase().includes(m.place.split(' ')[0].toLowerCase()));
+  if(lm)map.flyTo({center:[lm.lon,lm.lat],zoom:17,pitch:55,bearing:Math.random()*60-30,duration:1500});
+  addChat('Sistema',`⚔ Misión: "${m.name}" — dirígete a ${m.place}`,true);
+}
+function startMission(name,xp){
+  gainXP(Math.floor(xp*0.3),`Misión iniciada: ${name}`);
+  player.lugares++;
+  updatePlayerUI();
+}
+
+// ══════════════════════════════════════════════
+// CHAT
+// ══════════════════════════════════════════════
+function addChat(who,txt,sys=false,mystery=false){
+  const el=document.getElementById('chat-msgs');
+  const cls=mystery?'mys':sys?'sys':'';
+  const wc=mystery?'color:var(--mystery)':sys?'color:var(--stone)':'';
+  el.innerHTML+=`<div class="cm ${cls}"><span class="cw" style="${wc}">${who}:</span><span class="ct">${txt}</span></div>`;
+  el.scrollTop=el.scrollHeight;
+}
+async function sendChat(){
+  const inp=document.getElementById('chat-inp'),t=inp.value.trim();
+  if(!t)return; inp.value='';
+  addChat(MY_USERNAME,t);
+  await supa.from('messages').insert({username:MY_USERNAME,text:t});
+}
+document.getElementById('chat-send').onclick=sendChat;
+document.getElementById('chat-inp').addEventListener('keydown',e=>{if(e.key==='Enter')sendChat();});
+
+// ══════════════════════════════════════════════
+// RANKING
+// ══════════════════════════════════════════════
+function buildRanking(users){
+  if(!users||!users.length){document.getElementById('ranking-list').innerHTML='<div style="font-size:9px;color:var(--text-dim);text-align:center;padding:8px">Sin exploradores aún</div>';return;}
+  const medals=['gold','silver','bronze'];
+  document.getElementById('ranking-list').innerHTML=users.slice(0,6).map((u,i)=>`
+    <div class="rank-row">
+      <div class="rank-num ${medals[i]||'other'}">${i+1}</div>
+      <div class="rank-avatar" style="background:#C4A88222;color:#C4A882">${u.username[0].toUpperCase()}</div>
+      <div class="rank-info"><div class="rank-name">${u.username}${u.id===MY_USER_ID?' (tú)':''}</div><div class="rank-level">Nv.${u.level||1}</div></div>
+      <div class="rank-xp">${(u.xp||0).toLocaleString()} XP</div>
+    </div>`).join('');
+}
+function toggleRanking(){addChat('Sistema','ℹ Ranking opt-in — solo apareces si lo activas en tu perfil',true);}
+
+// ══════════════════════════════════════════════
+// MYSTERY
+// ══════════════════════════════════════════════
+let currentMystery=null;
+function showMysteryEvent(){
+  currentMystery=MYSTERY_EVENTS[Math.floor(Math.random()*MYSTERY_EVENTS.length)];
+  document.getElementById('myst-icon').textContent=currentMystery.icon;
+  document.getElementById('myst-title').textContent=currentMystery.title;
+  document.getElementById('myst-desc').textContent=currentMystery.desc;
+  document.getElementById('myst-reward').textContent=currentMystery.reward;
+  document.getElementById('mystery-overlay').classList.add('show');
+}
+function acceptMystery(){document.getElementById('mystery-overlay').classList.remove('show');gainXP(50,'¡Evento misterioso iniciado!');addChat('Sistema',`🌑 "${currentMystery?.title}" — ¡Buena suerte!`,false,true);}
+function closeMystery(){document.getElementById('mystery-overlay').classList.remove('show');addChat('Sistema','🌑 El misterio sigue en las sombras...',true);}
+function showLevelUp(lvIdx){
+  const lv=LEVELS[lvIdx];
+  document.getElementById('lu-title').textContent=`¡${lv.icon} Nivel ${lvIdx+1}!`;
+  document.getElementById('lu-sub').textContent=`Ahora eres: ${lv.name}`;
+  const t=document.getElementById('levelup-toast');
+  t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3500);
+}
+
+// ══════════════════════════════════════════════
+// SUPABASE
+// ══════════════════════════════════════════════
+async function registerUser(){
+  const{data,error}=await supa.from('users').insert({username:MY_USERNAME,xp:120,level:1,lat:42.0105,lon:-4.5390,last_seen:new Date().toISOString()}).select().single();
+  if(!error&&data){
+    MY_USER_ID=data.id;
+    document.getElementById('p-name').textContent=MY_USERNAME;
+    document.getElementById('p-avatar').textContent=MY_USERNAME[0].toUpperCase();
+  }
+}
+async function loadMessages(){
+  const{data}=await supa.from('messages').select('*').order('created_at',{ascending:true}).limit(40);
+  if(data&&data.length>0){document.getElementById('chat-msgs').innerHTML='';data.forEach(m=>addChat(m.username,m.text,m.username==='Sistema'));}
+}
+function subscribeToMessages(){
+  supa.channel('chat-live').on('postgres_changes',{event:'INSERT',schema:'public',table:'messages'},p=>{
+    if(p.new.username!==MY_USERNAME)addChat(p.new.username,p.new.text,p.new.username==='Sistema');
+  }).subscribe();
+}
+async function loadAndSubscribeUsers(){
+  const since=new Date(Date.now()-5*60*1000).toISOString();
+  const{data}=await supa.from('users').select('*').gte('last_seen',since).order('xp',{ascending:false});
+  if(data){buildRanking(data);data.filter(u=>u.id!==MY_USER_ID).forEach(u=>addAvatarMarker(u));}
+  supa.channel('users-live').on('postgres_changes',{event:'*',schema:'public',table:'users'},async()=>{
+    const since=new Date(Date.now()-5*60*1000).toISOString();
+    const{data}=await supa.from('users').select('*').gte('last_seen',since).order('xp',{ascending:false});
+    if(data)buildRanking(data);
+  }).subscribe();
+}
+async function keepAlive(){
+  if(!MY_USER_ID)return;
+  await supa.from('users').update({last_seen:new Date().toISOString(),xp:player.xp}).eq('id',MY_USER_ID);
+}
+
+// ══════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════
+async function init(){
+  const bar=document.getElementById('lbar'),st=document.getElementById('lstatus');
+  const steps=[[15,'Cargando calles de Palencia...'],[30,'Generando edificios en 3D...'],[50,'Colocando patrimonio histórico...'],[65,'Conectando exploradores...'],[80,'Activando misiones...'],[95,'Iniciando eventos misteriosos...'],[100,'¡Ciudad viva!']];
+  for(const[p,m]of steps){bar.style.width=p+'%';st.textContent=m;await new Promise(r=>setTimeout(r,280+Math.random()*150));}
+
+  initMap();
+  buildMissions();
+  updatePlayerUI();
+  addChat('Sistema','Bienvenido a Palencia Descubre 🏙',true);
+  addChat('Sistema','Pulsa cualquier monumento para iniciar una misión',true);
+
+  try{
+    await registerUser();
+    await loadMessages();
+    subscribeToMessages();
+    await loadAndSubscribeUsers();
+    setInterval(keepAlive,30000);
+    addChat('Sistema',`👋 Conectado como ${MY_USERNAME}`,true);
+  }catch(e){
+    buildRanking([]);
+    addChat('Sistema','⚠ Modo offline',true);
+  }
+
+  setTimeout(()=>addChat('Sistema','🌑 Algo extraño ocurre cerca de San Miguel esta noche...',false,true),18000);
+  await new Promise(r=>setTimeout(r,400));
+  document.getElementById('loading').classList.add('out');
+  setTimeout(()=>document.getElementById('loading').style.display='none',900);
+}
+init();
+</script>
+</body>
+</html>

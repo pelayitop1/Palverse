@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Palencia Descubre — Ciudad Viva</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Raleway:ital,wght@0,300;0,400;0,600;1,300&display=swap');
+:root {
+  --stone:#C4A882; --stone-dim:rgba(196,168,130,0.15); --stone-border:rgba(196,168,130,0.25);
+  --dark:#080B10; --dark2:#0C1018; --dark3:#111620; --surface:#161C28; --surface2:#1E2535;
+  --text:#EAE6DC; --text-dim:rgba(234,230,220,0.45);
+  --blue:#5B9BD5; --green:#6DBF82; --purple:#9B7EC8; --mystery:#C8407A;
+  --nature:#5BA87A; --culture:#5B8AC8; --civic:#C87A3A;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--dark);color:var(--text);font-family:'Raleway',sans-serif;overflow:hidden;height:100vh;width:100vw;}
+#mapCanvas{position:fixed;inset:0;width:100%;height:100%;cursor:grab;}
+#mapCanvas:active{cursor:grabbing;}
+
+/* HEADER */
+#header{position:fixed;top:0;left:0;right:0;z-index:100;padding:14px 24px;display:flex;align-items:center;justify-content:space-between;background:linear-gradient(to bottom,rgba(8,11,16,0.97) 60%,transparent);}
+.brand-name{font-family:'Cinzel',serif;font-size:20px;font-weight:600;letter-spacing:0.12em;}
+.brand-name em{color:var(--stone);font-style:normal;}
+.brand-sub{font-size:8px;letter-spacing:0.35em;color:var(--text-dim);text-transform:uppercase;margin-top:2px;}
+.hxp{display:flex;flex-direction:column;align-items:flex-end;gap:3px;}
+.hxp-label{font-size:8px;letter-spacing:0.2em;color:var(--text-dim);text-transform:uppercase;}
+.hxp-row{display:flex;align-items:center;gap:8px;}
+.hxp-level{font-family:'Cinzel',serif;font-size:13px;color:var(--stone);}
+.hxp-bar-wrap{width:90px;height:3px;background:rgba(255,255,255,0.08);border-radius:2px;overflow:hidden;}
+.hxp-bar-fill{height:100%;background:linear-gradient(90deg,var(--stone),#E8D5A0);border-radius:2px;transition:width 0.8s ease;}
+.hxp-pts{font-size:9px;color:var(--stone);}
+.live-dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:blink 2s infinite;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
+.header-right{display:flex;align-items:center;gap:16px;}
+
+/* PANELS */
+.panel{background:rgba(22,28,40,0.88);border:1px solid var(--stone-border);border-radius:3px;overflow:hidden;backdrop-filter:blur(10px);}
+.ph{padding:9px 13px;border-bottom:1px solid var(--stone-border);font-size:8px;letter-spacing:0.28em;text-transform:uppercase;color:var(--stone);display:flex;align-items:center;justify-content:space-between;}
+.pb{padding:11px 13px;}
+
+/* SIDEBAR LEFT */
+#sl{position:fixed;left:0;top:0;bottom:0;width:270px;z-index:90;padding:72px 0 70px;display:flex;flex-direction:column;background:linear-gradient(to right,rgba(8,11,16,0.93) 75%,transparent);pointer-events:none;overflow-y:auto;scrollbar-width:none;}
+#sl>*{pointer-events:all;margin:0 14px 12px;}
+.profile-xp{padding:14px;}
+.profile-avatar{width:48px;height:48px;border-radius:50%;background:var(--stone-dim);border:2px solid var(--stone-border);display:flex;align-items:center;justify-content:center;font-family:'Cinzel',serif;font-size:20px;color:var(--stone);margin-bottom:10px;}
+.profile-name{font-size:13px;font-weight:600;color:var(--text);margin-bottom:2px;}
+.profile-rank{font-size:9px;letter-spacing:0.15em;color:var(--stone);text-transform:uppercase;margin-bottom:10px;}
+.xp-bar-big-wrap{height:5px;background:rgba(255,255,255,0.07);border-radius:3px;overflow:hidden;margin-bottom:4px;}
+.xp-bar-big{height:100%;background:linear-gradient(90deg,var(--stone),#E8D5A0);border-radius:3px;transition:width 1s ease;}
+.xp-nums{display:flex;justify-content:space-between;font-size:9px;color:var(--text-dim);}
+.xp-nums span:first-child{color:var(--stone);}
+.stats-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:10px;}
+.stat-box{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:3px;padding:7px;text-align:center;}
+.stat-box .sv{font-family:'Cinzel',serif;font-size:16px;color:var(--stone);}
+.stat-box .sl{font-size:7px;letter-spacing:0.15em;color:var(--text-dim);text-transform:uppercase;margin-top:2px;}
+
+/* MISSIONS */
+.mission-item{padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.05);cursor:pointer;transition:padding-left 0.2s;}
+.mission-item:last-child{border-bottom:none;}
+.mission-item:hover{padding-left:5px;}
+.mi-top{display:flex;align-items:center;gap:7px;margin-bottom:4px;}
+.mi-icon{font-size:13px;flex-shrink:0;}
+.mi-name{font-size:11px;color:var(--text);flex:1;}
+.mi-xp{font-size:9px;color:var(--stone);white-space:nowrap;font-weight:600;}
+.mi-type{display:inline-block;font-size:7px;letter-spacing:0.15em;text-transform:uppercase;padding:1px 5px;border-radius:2px;margin-bottom:4px;}
+.mi-type.patrimonio{background:rgba(196,168,130,0.15);color:var(--stone);}
+.mi-type.naturaleza{background:rgba(91,168,122,0.15);color:var(--nature);}
+.mi-type.cultura{background:rgba(91,138,200,0.15);color:var(--culture);}
+.mi-type.civico{background:rgba(200,122,58,0.15);color:var(--civic);}
+.mi-type.misterio{background:rgba(200,64,122,0.2);color:var(--mystery);animation:myst-pulse 2s infinite;}
+@keyframes myst-pulse{0%,100%{opacity:1}50%{opacity:0.6}}
+.mi-bar-wrap{height:2px;background:rgba(255,255,255,0.06);border-radius:1px;overflow:hidden;}
+.mi-bar{height:100%;border-radius:1px;transition:width 0.8s ease;}
+
+/* SIDEBAR RIGHT */
+#sr{position:fixed;right:0;top:0;bottom:0;width:255px;z-index:90;padding:72px 0 70px;display:flex;flex-direction:column;background:linear-gradient(to left,rgba(8,11,16,0.93) 75%,transparent);pointer-events:none;}
+#sr>*{pointer-events:all;margin:0 14px 12px;}
+.rank-row{display:flex;align-items:center;gap:9px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.04);}
+.rank-row:last-child{border-bottom:none;}
+.rank-num{font-family:'Cinzel',serif;font-size:11px;width:18px;text-align:center;flex-shrink:0;}
+.rank-num.gold{color:#F0C040;}.rank-num.silver{color:#B0B8C8;}.rank-num.bronze{color:#C08850;}.rank-num.other{color:var(--text-dim);}
+.rank-avatar{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;border:1px solid rgba(255,255,255,0.12);}
+.rank-info{flex:1;min-width:0;}
+.rank-name{font-size:10px;color:var(--text);}
+.rank-level{font-size:8px;color:var(--text-dim);}
+.rank-xp{font-size:9px;color:var(--stone);white-space:nowrap;font-weight:600;}
+
+/* CHAT */
+#chat-panel{flex:1;display:flex;flex-direction:column;min-height:0;}
+#chat-msgs{flex:1;overflow-y:auto;padding:9px 12px;display:flex;flex-direction:column;gap:7px;scrollbar-width:thin;scrollbar-color:var(--stone-dim) transparent;}
+.cm{font-size:10px;line-height:1.45;}
+.cm .cw{font-weight:600;margin-right:4px;}
+.cm .ct{color:var(--text-dim);}
+.cm.sys .ct{font-style:italic;}
+.cm.mystery-msg .ct{color:var(--mystery);}
+#chat-inp-area{border-top:1px solid var(--stone-border);display:flex;}
+#chat-inp{flex:1;background:transparent;border:none;outline:none;padding:9px 11px;font-family:'Raleway',sans-serif;font-size:10px;color:var(--text);}
+#chat-inp::placeholder{color:var(--text-dim);}
+#chat-send{padding:0 11px;background:transparent;border:none;border-left:1px solid var(--stone-border);color:var(--stone);cursor:pointer;font-size:14px;transition:background 0.2s;}
+#chat-send:hover{background:var(--stone-dim);}
+
+/* BOTTOM BAR */
+#bottom-bar{position:fixed;bottom:0;left:0;right:0;z-index:100;padding:10px 20px;display:flex;align-items:center;justify-content:center;gap:10px;background:linear-gradient(to top,rgba(8,11,16,0.97) 60%,transparent);}
+.btn{padding:9px 18px;font-family:'Raleway',sans-serif;font-weight:600;font-size:10px;letter-spacing:0.12em;text-transform:uppercase;border-radius:3px;cursor:pointer;transition:all 0.2s;border:1px solid;}
+.btn-primary{background:var(--stone);color:var(--dark);border-color:var(--stone);}
+.btn-primary:hover{background:#D4B892;}
+.btn-ghost{background:transparent;color:var(--stone);border-color:var(--stone-border);}
+.btn-ghost:hover,.btn-ghost.active{background:var(--stone-dim);border-color:var(--stone);}
+.btn-mystery{background:rgba(200,64,122,0.15);color:var(--mystery);border-color:rgba(200,64,122,0.4);animation:mystery-glow 3s ease-in-out infinite;}
+@keyframes mystery-glow{0%,100%{box-shadow:0 0 0 rgba(200,64,122,0)}50%{box-shadow:0 0 12px rgba(200,64,122,0.4)}}
+
+/* TOOLTIP */
+#tooltip{position:fixed;z-index:200;pointer-events:none;background:rgba(12,16,24,0.97);border:1px solid var(--stone-border);border-radius:4px;padding:11px 14px;min-width:170px;backdrop-filter:blur(10px);display:none;}
+.tt-title{font-family:'Cinzel',serif;font-size:14px;color:var(--stone);margin-bottom:5px;}
+.tt-type{font-size:8px;letter-spacing:0.2em;text-transform:uppercase;margin-bottom:6px;}
+.tt-info{font-size:9px;color:var(--text-dim);line-height:1.6;}
+.tt-xp{font-size:10px;color:var(--stone);font-weight:600;margin-top:5px;}
+
+/* MINIMAP */
+#minimap{position:fixed;bottom:58px;right:269px;width:96px;height:96px;z-index:100;border:1px solid var(--stone-border);border-radius:3px;overflow:hidden;background:rgba(12,16,24,0.92);backdrop-filter:blur(4px);}
+#minimap canvas{width:100%;height:100%;}
+
+/* MYSTERY OVERLAY */
+#mystery-overlay{position:fixed;inset:0;z-index:300;background:rgba(8,4,12,0.92);display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity 0.6s;}
+#mystery-overlay.show{opacity:1;pointer-events:all;}
+.mystery-box{max-width:400px;width:90%;border:1px solid rgba(200,64,122,0.5);border-radius:6px;background:rgba(20,10,28,0.98);padding:32px;text-align:center;backdrop-filter:blur(16px);box-shadow:0 0 60px rgba(200,64,122,0.2);}
+.mystery-icon{font-size:48px;margin-bottom:16px;animation:float 3s ease-in-out infinite;}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.mystery-title{font-family:'Cinzel',serif;font-size:22px;color:var(--mystery);letter-spacing:0.08em;margin-bottom:12px;}
+.mystery-desc{font-size:12px;color:var(--text-dim);line-height:1.7;margin-bottom:20px;}
+.mystery-reward{font-size:11px;color:var(--stone);margin-bottom:24px;font-weight:600;}
+.mystery-btns{display:flex;gap:10px;justify-content:center;}
+
+/* LEVEL UP TOAST */
+#levelup-toast{position:fixed;top:80px;left:50%;transform:translateX(-50%) translateY(-20px);z-index:400;background:rgba(12,16,24,0.97);border:1px solid var(--stone);border-radius:4px;padding:14px 24px;text-align:center;opacity:0;pointer-events:none;transition:all 0.4s;}
+#levelup-toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+.lu-title{font-family:'Cinzel',serif;font-size:16px;color:var(--stone);}
+.lu-sub{font-size:10px;color:var(--text-dim);margin-top:3px;}
+
+/* LOADING */
+#loading{position:fixed;inset:0;z-index:999;background:var(--dark);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;transition:opacity 0.9s;}
+#loading.out{opacity:0;pointer-events:none;}
+.l-title{font-family:'Cinzel',serif;font-size:40px;font-weight:400;letter-spacing:0.15em;}
+.l-title em{color:var(--stone);font-style:normal;}
+.l-sub{font-size:9px;letter-spacing:0.35em;color:var(--text-dim);text-transform:uppercase;}
+.l-bar-wrap{width:280px;height:2px;background:rgba(255,255,255,0.07);border-radius:1px;overflow:hidden;}
+.l-bar{height:100%;background:var(--stone);width:0;transition:width 0.35s ease;}
+.l-status{font-size:9px;letter-spacing:0.18em;color:var(--text-dim);}
+::-webkit-scrollbar{width:3px;}
+::-webkit-scrollbar-thumb{background:var(--stone-dim);border-radius:2px;}
+@media(max-width:768px){#sl,#sr,#minimap{display:none;}}
+</style>
+</head>
+<body>
+
+<div id="loading">
+  <div class="l-title">Palencia <em>Descubre</em></div>
+  <div class="l-sub">Ciudad Viva · Ayuntamiento de Palencia</div>
+  <div class="l-bar-wrap"><div class="l-bar" id="lbar"></div></div>
+  <div class="l-status" id="lstatus">Iniciando ciudad digital...</div>
+</div>
+
+<div id="mystery-overlay">
+  <div class="mystery-box">
+    <div class="mystery-icon" id="myst-icon">🌑</div>
+    <div class="mystery-title" id="myst-title">Evento Misterioso</div>
+    <div class="mystery-desc" id="myst-desc">Algo extraño ocurre en la ciudad...</div>
+    <div class="mystery-reward" id="myst-reward">+300 XP si completas el reto</div>
+    <div class="mystery-btns">
+      <button class="btn btn-mystery" onclick="acceptMystery()">Investigar</button>
+      <button class="btn btn-ghost" onclick="closeMystery()">Ignorar</button>
+    </div>
+  </div>
+</div>
+
+<div id="levelup-toast">
+  <div class="lu-title" id="lu-title">¡Nuevo Nivel!</div>
+  <div class="lu-sub" id="lu-sub">Has alcanzado un nuevo rango</div>
+</div>
+
+<canvas id="mapCanvas"></canvas>
+
+<div id="tooltip">
+  <div class="tt-title" id="tt-title">—</div>
+  <div class="tt-type" id="tt-type"></div>
+  <div class="tt-info" id="tt-info"></div>
+  <div class="tt-xp" id="tt-xp"></div>
+</div>
+
+<div id="header">
+  <div class="brand">
+    <div class="brand-name">Palencia <em>Descubre</em></div>
+    <div class="brand-sub">Ciudad Viva · Ayuntamiento de Palencia</div>
+  </div>
+  <div class="header-right">
+    <div class="hxp">
+      <div class="hxp-label">Tu progreso</div>
+      <div class="hxp-row">
+        <div class="hxp-level" id="h-level">Nv.1</div>
+        <div class="hxp-bar-wrap"><div class="hxp-bar-fill" id="h-xpbar" style="width:12%"></div></div>
+        <div class="hxp-pts" id="h-xppts">120 XP</div>
+      </div>
+    </div>
+    <div class="live-dot"></div>
+  </div>
+</div>
+
+<div id="sl">
+  <div class="panel">
+    <div class="ph"><span>Mi Perfil</span><span>⚜</span></div>
+    <div class="pb profile-xp">
+      <div class="profile-avatar">V</div>
+      <div class="profile-name">Viajero</div>
+      <div class="profile-rank" id="p-rank">🚶 Viajero del Carrión</div>
+      <div class="xp-bar-big-wrap"><div class="xp-bar-big" id="p-xpbar" style="width:12%"></div></div>
+      <div class="xp-nums"><span id="p-xp">120 XP</span><span id="p-xpnext">/ 500 XP</span></div>
+      <div class="stats-row">
+        <div class="stat-box"><div class="sv" id="st-lugares">2</div><div class="sl">Lugares</div></div>
+        <div class="stat-box"><div class="sv" id="st-misiones">1</div><div class="sl">Misiones</div></div>
+        <div class="stat-box"><div class="sv" id="st-dias">1</div><div class="sl">Días</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="ph"><span>Misiones</span><span>5 activas</span></div>
+    <div class="pb" id="missions-list"></div>
+  </div>
+</div>
+
+<div id="sr">
+  <div class="panel">
+    <div class="ph"><span>Exploradores</span><span style="font-size:8px;color:var(--text-dim);cursor:pointer" onclick="toggleRanking()">opt-in ⓘ</span></div>
+    <div class="pb" id="ranking-list"></div>
+  </div>
+  <div id="chat-panel" class="panel">
+    <div class="ph"><span>Ciudad Viva</span><span>💬</span></div>
+    <div id="chat-msgs"></div>
+    <div id="chat-inp-area">
+      <input id="chat-inp" type="text" placeholder="Mensaje a la ciudad..." maxlength="80">
+      <button id="chat-send">→</button>
+    </div>
+  </div>
+</div>
+
+<div id="bottom-bar">
+  <button class="btn btn-ghost active" id="btnMapa" onclick="setView('map')">🗺 Mapa</button>
+  <button class="btn btn-primary" onclick="setView('ar')">📷 AR</button>
+  <button class="btn btn-ghost" onclick="openMisiones()">⚔ Misiones</button>
+  <button class="btn btn-mystery" onclick="showMysteryEvent()">🌑 Misterio</button>
+</div>
+
+<div id="minimap"><canvas id="mmCanvas"></canvas></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+const CENTER={lat:42.0105,lon:-4.5390};
+const LEVELS=[
+  {min:0,   max:500,  name:'Viajero del Carrión',   icon:'🚶'},
+  {min:500, max:1500, name:'Conocedor de Palencia',  icon:'🏛'},
+  {min:1500,max:3500, name:'Guardián del Románico',  icon:'⛪'},
+  {min:3500,max:7000, name:'Cronista Palentino',     icon:'📜'},
+  {min:7000,max:15000,name:'Leyenda de la Ciudad',   icon:'⚜'},
+  {min:15000,max:99999,name:'Inmortal de Palencia',  icon:'👑'},
+];
+const MISSIONS=[
+  {id:1,name:'Visita la Catedral',   type:'patrimonio',icon:'⛪',xp:200,progress:0,total:1,place:'Catedral de San Antolín'},
+  {id:2,name:'Ruta del Carrión',     type:'naturaleza', icon:'🌿',xp:150,progress:1,total:3,place:'Río Carrión'},
+  {id:3,name:'Trivia Plaza Mayor',   type:'patrimonio',icon:'🏛',xp:250,progress:1,total:3,place:'Plaza Mayor'},
+  {id:4,name:'Visita el Museo',      type:'cultura',   icon:'🎨',xp:180,progress:0,total:1,place:'Museo Arqueológico'},
+  {id:5,name:'Reporta tu barrio',    type:'civico',    icon:'📋',xp:100,progress:0,total:1,place:'Tu barrio'},
+  {id:6,name:'La Sombra del Rey',    type:'misterio',  icon:'🌑',xp:400,progress:0,total:1,place:'???'},
+];
+const MYSTERY_EVENTS=[
+  {icon:'🌑',title:'La Sombra del Rey Wamba',   desc:'Dicen que en las noches de luna nueva, el espíritu del rey visigodo vaga por las murallas. Localiza 3 puntos de la antigua muralla antes del amanecer.',reward:'+400 XP · Insignia "Testigo del Rey"'},
+  {icon:'🕯',title:'El Monje Sin Nombre',        desc:'Un manuscrito olvidado en la Catedral revela la ubicación de una cámara secreta. Resuelve el enigma antes de que la campana suene 12 veces.',reward:'+350 XP · Insignia "Guardián del Secreto"'},
+  {icon:'🦅',title:'El Halcón de Doña Urraca',  desc:'La reina dejó un mensaje cifrado entre las piedras del castillo. El primer explorador en descifrarlo será nombrado Cronista Oficial.',reward:'+500 XP · Título exclusivo "Cronista de Doña Urraca"'},
+];
+const RANKING=[
+  {name:'Elena M.',  level:4,xp:6820,color:'#C9A84C',emoji:'E'},
+  {name:'Javier R.', level:3,xp:4210,color:'#5B9BD5',emoji:'J'},
+  {name:'Sofia L.',  level:3,xp:3890,color:'#9B7EC8',emoji:'S'},
+  {name:'Marco T.',  level:2,xp:2100,color:'#6DBF82',emoji:'M'},
+  {name:'Tú',        level:1,xp:120, color:'#C4A882',emoji:'V',isMe:true},
+];
+const LANDMARKS=[
+  {name:'Plaza Mayor',          lat:42.0105,lon:-4.5390,type:'patrimonio',xp:150,desc:'Centro histórico, s.XVI'},
+  {name:'Catedral S.Antolín',   lat:42.0119,lon:-4.5342,type:'patrimonio',xp:200,desc:'Catedral gótica s.XIV–XVI'},
+  {name:'Río Carrión',          lat:42.0090,lon:-4.5450,type:'naturaleza', xp:80, desc:'Paseo fluvial histórico'},
+  {name:'Parque del Salón',     lat:42.0072,lon:-4.5402,type:'naturaleza', xp:60, desc:'Jardín romántico s.XIX'},
+  {name:'Museo Arqueológico',   lat:42.0102,lon:-4.5330,type:'cultura',   xp:180,desc:'Patrimonio palentino'},
+  {name:'Teatro Principal',     lat:42.0110,lon:-4.5370,type:'cultura',   xp:120,desc:'Sala histórica s.XIX'},
+  {name:'Iglesia San Miguel',   lat:42.0115,lon:-4.5356,type:'patrimonio',xp:130,desc:'Románico palentino'},
+  {name:'???',                  lat:42.0098,lon:-4.5415,type:'misterio',  xp:400,desc:'Lugar de leyenda...'},
+];
+const TYPE_COLORS={patrimonio:0xC4A882,naturaleza:0x5BA87A,cultura:0x5B8AC8,civico:0xC87A3A,misterio:0xC8407A};
+const TYPE_HEX={patrimonio:'#C4A882',naturaleza:'#5BA87A',cultura:'#5B8AC8',civico:'#C87A3A',misterio:'#C8407A'};
+const CHAT_SEED=[
+  {who:'Sistema',txt:'Bienvenido a Palencia Descubre 🏙',sys:true},
+  {who:'Elena M.',txt:'Acabo de completar la ruta del Carrión! +150 XP 🎉'},
+  {who:'Javier R.',txt:'La misión de la Catedral es increíble, aprendí un montón'},
+  {who:'Sistema',txt:'🌑 Evento misterioso activo cerca de San Miguel...',mystery:true},
+  {who:'Sofia L.',txt:'Alguien más está en el Parque del Salón?'},
+  {who:'Marco T.',txt:'Llevo 3 días seguidos — ¡nivel 2 conseguido!'},
+];
+
+let player={xp:120,level:0,lugares:2,misiones:1,dias:1};
+
+function getLevel(xp){for(let i=LEVELS.length-1;i>=0;i--)if(xp>=LEVELS[i].min)return i;return 0;}
+function getLevelPct(xp){const lv=getLevel(xp),l=LEVELS[lv];return((xp-l.min)/(l.max-l.min)*100).toFixed(0);}
+
+function updatePlayerUI(){
+  const lv=getLevel(player.xp),l=LEVELS[lv],pct=getLevelPct(player.xp);
+  document.getElementById('p-xpbar').style.width=pct+'%';
+  document.getElementById('p-xp').textContent=player.xp.toLocaleString()+' XP';
+  document.getElementById('p-xpnext').textContent='/ '+l.max.toLocaleString()+' XP';
+  document.getElementById('p-rank').textContent=l.icon+' '+l.name;
+  document.getElementById('st-lugares').textContent=player.lugares;
+  document.getElementById('st-misiones').textContent=player.misiones;
+  document.getElementById('st-dias').textContent=player.dias;
+  document.getElementById('h-level').textContent='Nv.'+(lv+1);
+  document.getElementById('h-xpbar').style.width=pct+'%';
+  document.getElementById('h-xppts').textContent=player.xp.toLocaleString()+' XP';
+}
+
+function gainXP(amount,reason){
+  const oldLv=getLevel(player.xp);
+  player.xp+=amount;
+  const newLv=getLevel(player.xp);
+  updatePlayerUI();
+  addChat('Sistema',`+${amount} XP — ${reason}`,true);
+  if(newLv>oldLv)showLevelUp(newLv);
+}
+
+// THREE.JS
+const canvas=document.getElementById('mapCanvas');
+const renderer=new THREE.WebGLRenderer({canvas,antialias:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.setClearColor(0x080B10);
+renderer.shadowMap.enabled=true;
+const scene=new THREE.Scene();
+scene.fog=new THREE.Fog(0x080B10,90,200);
+const camera=new THREE.PerspectiveCamera(52,innerWidth/innerHeight,0.1,500);
+window.addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
+renderer.setSize(innerWidth,innerHeight);
+
+scene.add(new THREE.AmbientLight(0x1A2040,1.8));
+const dir=new THREE.DirectionalLight(0xC4A882,0.6);
+dir.position.set(30,60,30);dir.castShadow=true;scene.add(dir);
+const pl1=new THREE.PointLight(0x5B9BD5,1.2,80);pl1.position.set(-20,20,20);scene.add(pl1);
+const pl2=new THREE.PointLight(0xC4A882,0.8,60);pl2.position.set(20,15,-20);scene.add(pl2);
+
+function geoXZ(lat,lon){const s=8000,x=(lon-CENTER.lon)*s*Math.cos(CENTER.lat*Math.PI/180),z=-(lat-CENTER.lat)*s;return{x,z};}
+
+// Ground
+const gnd=new THREE.Mesh(new THREE.PlaneGeometry(300,300),new THREE.MeshStandardMaterial({color:0x0C1018,roughness:1}));
+gnd.rotation.x=-Math.PI/2;gnd.receiveShadow=true;scene.add(gnd);
+scene.add(new THREE.GridHelper(300,60,0x1A2540,0x0F1520));
+
+// River
+const rpts=[[42.015,-4.548],[42.012,-4.546],[42.010,-4.545],[42.008,-4.543],[42.006,-4.540],[42.004,-4.537]]
+  .map(([la,lo])=>{const p=geoXZ(la,lo);return new THREE.Vector3(p.x,0.05,p.z);});
+const rcurve=new THREE.CatmullRomCurve3(rpts);
+scene.add(new THREE.Mesh(new THREE.TubeGeometry(rcurve,30,0.65,6,false),new THREE.MeshStandardMaterial({color:0x1A3A5C,roughness:0.3,metalness:0.5})));
+scene.add(new THREE.Mesh(new THREE.TubeGeometry(rcurve,30,1.05,6,false),new THREE.MeshBasicMaterial({color:0x4A90D9,transparent:true,opacity:0.1})));
+
+// Buildings
+for(let i=0;i<200;i++){
+  const ang=Math.random()*Math.PI*2,d=Math.random()*28;
+  const bx=Math.cos(ang)*d,bz=Math.sin(ang)*d;
+  const w=1.2+Math.random()*3,dp=1.2+Math.random()*3,h=1.5+Math.random()*(d<10?8:4);
+  const col=new THREE.Color().setHSL(d<8?0.08+Math.random()*0.04:0.6,0.1,0.08+Math.random()*0.06);
+  const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,dp),new THREE.MeshStandardMaterial({color:col,roughness:0.9,metalness:0.1}));
+  m.position.set(bx,h/2,bz);m.castShadow=true;m.receiveShadow=true;scene.add(m);
+  if(h>3&&Math.random()>0.35){
+    for(let ww=0;ww<Math.floor(h/1.5);ww++){
+      if(Math.random()>0.45){
+        const wm=new THREE.Mesh(new THREE.PlaneGeometry(0.3,0.2),new THREE.MeshBasicMaterial({color:Math.random()>0.3?0xE8D5A0:0x5B9BD5,transparent:true,opacity:0.35+Math.random()*0.4}));
+        wm.position.set(bx+(Math.random()-0.5)*w*0.8,1+ww*1.5+Math.random()*0.5,bz+dp/2+0.01);scene.add(wm);
+      }
+    }
+  }
+}
+
+// Landmarks
+const lmMeshes=[];
+LANDMARKS.forEach((lm,i)=>{
+  const p=geoXZ(lm.lat,lm.lon),col=TYPE_COLORS[lm.type]||0xC4A882,isMyst=lm.type==='misterio';
+  const base=new THREE.Mesh(new THREE.CylinderGeometry(2.2,2.2,0.12,16),new THREE.MeshStandardMaterial({color:col,roughness:0.3,metalness:0.7,transparent:true,opacity:0.75}));
+  base.position.set(p.x,0.08,p.z);scene.add(base);
+  const h=isMyst?7:5;
+  const tower=new THREE.Mesh(new THREE.CylinderGeometry(isMyst?0.2:0.15,0.4,h,8),new THREE.MeshStandardMaterial({color:col,roughness:0.2,metalness:0.8}));
+  tower.position.set(p.x,h/2,p.z);tower.userData={lm,baseY:h/2};scene.add(tower);lmMeshes.push(tower);
+  const halo=new THREE.Mesh(new THREE.CylinderGeometry(2.2,3.5,0.04,32),new THREE.MeshBasicMaterial({color:col,transparent:true,opacity:0.12}));
+  halo.position.set(p.x,0.04,p.z);halo.userData={isHalo:true};scene.add(halo);
+  const ptl=new THREE.PointLight(col,isMyst?2:1,isMyst?18:12);ptl.position.set(p.x,5,p.z);scene.add(ptl);
+  // Label
+  const cv=document.createElement('canvas');cv.width=256;cv.height=56;
+  const ctx=cv.getContext('2d');
+  ctx.fillStyle='rgba(12,16,24,0.88)';ctx.roundRect(2,2,252,52,6);ctx.fill();
+  ctx.strokeStyle=TYPE_HEX[lm.type]||'#C4A882';ctx.lineWidth=1;ctx.stroke();
+  ctx.fillStyle=isMyst?'#C8407A':'#E8D5A0';ctx.font='600 15px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText(lm.name.length>22?lm.name.slice(0,20)+'…':lm.name,128,28);
+  const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(cv),transparent:true}));
+  sp.position.set(p.x,h+2.5,p.z);sp.scale.set(8,1.8,1);scene.add(sp);
+});
+
+// Avatars
+const avatarGroups=[];
+[{name:'Elena',lat:42.0112,lon:-4.5382,color:'#C9A84C'},
+ {name:'Javier',lat:42.0098,lon:-4.5362,color:'#5B9BD5'},
+ {name:'Sofia',lat:42.0122,lon:-4.5338,color:'#9B7EC8'},
+ {name:'Marco',lat:42.0082,lon:-4.5412,color:'#6DBF82'}]
+.forEach(u=>{
+  const p=geoXZ(u.lat,u.lon),c=new THREE.Color(u.color),g=new THREE.Group();
+  const body=new THREE.Mesh(new THREE.CylinderGeometry(0.28,0.28,1.1,8),new THREE.MeshStandardMaterial({color:c,roughness:0.5}));
+  const head=new THREE.Mesh(new THREE.SphereGeometry(0.32,8,8),new THREE.MeshStandardMaterial({color:c,roughness:0.3}));
+  head.position.y=0.85;g.add(body);g.add(head);
+  g.position.set(p.x,0.55,p.z);g.userData={user:u};scene.add(g);avatarGroups.push(g);
+  const pts=[];for(let t=8;t>=0;t--)pts.push(new THREE.Vector3(p.x+(Math.random()-0.5)*2,0.05,p.z+t*0.6+(Math.random()-0.5)*1.5));
+  scene.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),new THREE.LineBasicMaterial({color:c,transparent:true,opacity:0.25})));
+});
+
+// Camera
+let drag=false,prevM={x:0,y:0},theta=Math.PI/5,phi=Math.PI/3,radius=95;
+const target=new THREE.Vector3();
+function updateCam(){camera.position.set(target.x+radius*Math.sin(phi)*Math.sin(theta),target.y+radius*Math.cos(phi),target.z+radius*Math.sin(phi)*Math.cos(theta));camera.lookAt(target);}
+canvas.addEventListener('mousedown',e=>{drag=true;prevM={x:e.clientX,y:e.clientY};});
+window.addEventListener('mouseup',()=>drag=false);
+canvas.addEventListener('mousemove',e=>{if(!drag){doHover(e);return;}theta-=(e.clientX-prevM.x)*0.005;phi=Math.max(0.2,Math.min(1.3,phi+(e.clientY-prevM.y)*0.005));prevM={x:e.clientX,y:e.clientY};updateCam();});
+canvas.addEventListener('wheel',e=>{radius=Math.max(20,Math.min(160,radius+e.deltaY*0.1));updateCam();});
+let lt=null;
+canvas.addEventListener('touchstart',e=>{if(e.touches.length===1){drag=true;lt={x:e.touches[0].clientX,y:e.touches[0].clientY};}});
+window.addEventListener('touchend',()=>drag=false);
+canvas.addEventListener('touchmove',e=>{if(!drag||!lt)return;theta-=(e.touches[0].clientX-lt.x)*0.005;phi=Math.max(0.2,Math.min(1.3,phi+(e.touches[0].clientY-lt.y)*0.005));lt={x:e.touches[0].clientX,y:e.touches[0].clientY};updateCam();});
+
+// Hover
+const rc=new THREE.Raycaster(),mv=new THREE.Vector2();
+const tt=document.getElementById('tooltip');
+function doHover(e){
+  mv.set((e.clientX/innerWidth)*2-1,-(e.clientY/innerHeight)*2+1);
+  rc.setFromCamera(mv,camera);
+  const hits=rc.intersectObjects([...lmMeshes,...avatarGroups.map(g=>g.children[0])]);
+  if(hits.length){
+    const obj=hits[0].object,lm=obj.userData.lm,usr=obj.parent?.userData?.user;
+    tt.style.display='block';tt.style.left=(e.clientX+14)+'px';tt.style.top=(e.clientY-20)+'px';
+    if(lm){
+      document.getElementById('tt-title').textContent=lm.name;
+      document.getElementById('tt-type').textContent=lm.type;
+      document.getElementById('tt-type').style.color=TYPE_HEX[lm.type];
+      document.getElementById('tt-info').textContent=lm.desc;
+      document.getElementById('tt-xp').textContent=`+${lm.xp} XP al visitar`;
+    }else if(usr){
+      document.getElementById('tt-title').textContent=usr.name;
+      document.getElementById('tt-type').textContent='Explorador activo';
+      document.getElementById('tt-type').style.color='#C4A882';
+      document.getElementById('tt-info').textContent='';
+      document.getElementById('tt-xp').textContent='';
+    }
+    canvas.style.cursor='pointer';return;
+  }
+  tt.style.display='none';canvas.style.cursor='grab';
+}
+
+// UI builds
+function buildMissions(){
+  document.getElementById('missions-list').innerHTML=MISSIONS.map(m=>`
+    <div class="mission-item" onclick="clickMission(${m.id})">
+      <div class="mi-top"><span class="mi-icon">${m.icon}</span><span class="mi-name">${m.name}</span><span class="mi-xp">+${m.xp} XP</span></div>
+      <span class="mi-type ${m.type}">${m.type}</span>
+      <div class="mi-bar-wrap"><div class="mi-bar" style="width:${(m.progress/m.total)*100}%;background:${TYPE_HEX[m.type]}"></div></div>
+    </div>`).join('');
+}
+
+function buildRanking(){
+  const medals=['gold','silver','bronze'];
+  document.getElementById('ranking-list').innerHTML=RANKING.map((u,i)=>`
+    <div class="rank-row">
+      <div class="rank-num ${medals[i]||'other'}">${i+1}</div>
+      <div class="rank-avatar" style="background:${u.color}22;color:${u.color}">${u.emoji}</div>
+      <div class="rank-info"><div class="rank-name">${u.name}${u.isMe?' (tú)':''}</div><div class="rank-level">Nv.${u.level} · ${LEVELS[u.level-1]?.name||'—'}</div></div>
+      <div class="rank-xp">${u.xp.toLocaleString()} XP</div>
+    </div>`).join('');
+}
+
+function buildChat(){CHAT_SEED.forEach(m=>addChat(m.who,m.txt,m.sys,m.mystery));}
+
+function addChat(who,txt,sys=false,mystery=false){
+  const el=document.getElementById('chat-msgs'),cls=mystery?'mystery-msg':sys?'sys':'';
+  el.innerHTML+=`<div class="cm ${cls}"><span class="cw" style="${mystery?'color:var(--mystery)':sys?'color:var(--stone)':''}">${who}:</span><span class="ct">${txt}</span></div>`;
+  el.scrollTop=el.scrollHeight;
+}
+
+document.getElementById('chat-send').onclick=sendChat;
+document.getElementById('chat-inp').addEventListener('keydown',e=>{if(e.key==='Enter')sendChat();});
+function sendChat(){const inp=document.getElementById('chat-inp'),t=inp.value.trim();if(!t)return;addChat('Tú',t);inp.value='';}
+
+function clickMission(id){const m=MISSIONS.find(x=>x.id===id);if(!m)return;if(m.type==='misterio'){showMysteryEvent();return;}addChat('Sistema',`⚔ Misión activa: "${m.name}" — dirígete a ${m.place}`,true);}
+function openMisiones(){lmMeshes.forEach(mesh=>{mesh.material.emissive=new THREE.Color(TYPE_COLORS[mesh.userData.lm?.type]||0xC4A882);mesh.material.emissiveIntensity=0.6;setTimeout(()=>{mesh.material.emissiveIntensity=0;},2500);});addChat('Sistema','📍 Monumentos con misión iluminados en el mapa',true);}
+
+let currentMystery=null;
+function showMysteryEvent(){currentMystery=MYSTERY_EVENTS[Math.floor(Math.random()*MYSTERY_EVENTS.length)];document.getElementById('myst-icon').textContent=currentMystery.icon;document.getElementById('myst-title').textContent=currentMystery.title;document.getElementById('myst-desc').textContent=currentMystery.desc;document.getElementById('myst-reward').textContent=currentMystery.reward;document.getElementById('mystery-overlay').classList.add('show');}
+function acceptMystery(){document.getElementById('mystery-overlay').classList.remove('show');gainXP(50,'Evento misterioso iniciado!');addChat('Sistema',`🌑 "${currentMystery?.title}" — ¡Buena suerte!`,false,true);}
+function closeMystery(){document.getElementById('mystery-overlay').classList.remove('show');addChat('Sistema','🌑 El misterio sigue en las sombras...',true);}
+
+function showLevelUp(lvIdx){const lv=LEVELS[lvIdx];document.getElementById('lu-title').textContent=`¡${lv.icon} Nivel ${lvIdx+1}!`;document.getElementById('lu-sub').textContent=`Ahora eres: ${lv.name}`;const t=document.getElementById('levelup-toast');t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3500);}
+function setView(v){document.getElementById('btnMapa').classList.toggle('active',v==='map');if(v==='ar'){addChat('Sistema','📷 Vista AR — activa GPS y cámara en móvil real',true);alert('🚧 AR: En producción aquí se activa AR.js + A-Frame con anclaje GPS.\nRequiere HTTPS + cámara en dispositivo real.');}}
+function toggleRanking(){addChat('Sistema','ℹ El ranking es opt-in — solo apareces si lo activas en tu perfil',true);}
+
+// Minimap
+function drawMinimap(){
+  const mc=document.getElementById('mmCanvas');mc.width=96;mc.height=96;
+  const ctx=mc.getContext('2d');ctx.fillStyle='#080B10';ctx.fillRect(0,0,96,96);
+  ctx.strokeStyle='rgba(255,255,255,0.04)';ctx.lineWidth=0.5;
+  for(let i=0;i<=8;i++){ctx.beginPath();ctx.moveTo(i*12,0);ctx.lineTo(i*12,96);ctx.stroke();ctx.beginPath();ctx.moveTo(0,i*12);ctx.lineTo(96,i*12);ctx.stroke();}
+  LANDMARKS.forEach(lm=>{const p=geoXZ(lm.lat,lm.lon),mx=48+p.x*1.4,my=48+p.z*1.4;ctx.fillStyle=TYPE_HEX[lm.type];ctx.beginPath();ctx.arc(mx,my,lm.type==='misterio'?4:2.5,0,Math.PI*2);ctx.fill();});
+  avatarGroups.forEach(g=>{ctx.fillStyle=g.userData.user.color;ctx.beginPath();ctx.arc(48+g.position.x*1.4,48+g.position.z*1.4,2,0,Math.PI*2);ctx.fill();});
+  ctx.fillStyle='#C4A882';ctx.beginPath();ctx.arc(48,48,3.5,0,Math.PI*2);ctx.fill();
+}
+
+// Animate
+const clk=new THREE.Clock();
+function animate(){
+  requestAnimationFrame(animate);
+  const t=clk.getElapsedTime();
+  lmMeshes.forEach((m,i)=>{m.rotation.y=t*0.4+i*0.7;m.position.y=m.userData.baseY+Math.sin(t*1.8+i*1.2)*0.25;});
+  scene.children.forEach(c=>{if(c.userData.isHalo)c.material.opacity=0.06+Math.sin(t*2)*0.07;});
+  avatarGroups.forEach((g,i)=>{g.position.x+=Math.sin(t*0.3+i*1.5)*0.003;g.position.z+=Math.cos(t*0.3+i*1.5)*0.003;g.rotation.y=t*0.3+i;});
+  if(t<2.5){radius=150-(150-95)*Math.min(1,t/2);updateCam();}
+  renderer.render(scene,camera);
+}
+
+// Init
+async function init(){
+  const bar=document.getElementById('lbar'),st=document.getElementById('lstatus');
+  const steps=[[10,'Cargando Palencia...'],[25,'Generando tejido urbano...'],[45,'Colocando patrimonio histórico...'],[60,'Conectando exploradores...'],[75,'Activando misiones...'],[88,'Iniciando eventos misteriosos...'],[100,'¡Ciudad viva!']];
+  for(const[p,m]of steps){bar.style.width=p+'%';st.textContent=m;await new Promise(r=>setTimeout(r,280+Math.random()*180));}
+  buildMissions();buildRanking();buildChat();updatePlayerUI();
+  drawMinimap();setInterval(drawMinimap,3000);
+  updateCam();animate();
+  setTimeout(()=>{addChat('Sistema','🌑 Algo extraño ocurre cerca de San Miguel esta noche...',false,true);},12000);
+  await new Promise(r=>setTimeout(r,300));
+  document.getElementById('loading').classList.add('out');
+  setTimeout(()=>document.getElementById('loading').style.display='none',900);
+}
+init();
+</script>
+</body>
+</html>
